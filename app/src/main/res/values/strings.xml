@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">ScrambledWordGame</string>
+    <string name="about">This game is designed to help you master most commonly used GRE words. There are hints and ques to help you spell the words. All the best !</string>
+</resources>
