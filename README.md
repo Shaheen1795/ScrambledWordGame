@@ -7,7 +7,8 @@ A fun and engaging game where the player is given a scrambled word and has to gu
 - Scrambled words to guess
 - Timer to track the time taken for guessing all words 
 - Scoring system based on speed and correctness
-
+- Hints to guess the word
+  
 ## Installation
 
 1. Clone this repository to your local machine:
@@ -26,8 +27,8 @@ Once you guess the word correctly, you will earn points based on the speed.
 Continue guessing the scrambled words to improve your score!
 
 * Scrambled words are the most commonly used GRE words, you can use it for your GRE prep !!
-
-[demo.webm](https://github.com/user-attachments/assets/b76ebc5b-4f26-417c-a620-86ba20541011)
+  
+[demo.webm](https://github.com/user-attachments/assets/ef0b83aa-67a0-4573-a498-81644c09271c)
 
 
 Contributing
