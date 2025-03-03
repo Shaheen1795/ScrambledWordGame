@@ -13,6 +13,7 @@ object Words {
 
     var mapOfWords = mapOf(Pair(Level.L1,wordsList_level1),Pair(Level.L2, wordsList_level2),Pair(Level.L3,wordsList_level3))
 
-    var mapOfMeanings = mapOf(Pair("abjure","verb - to reject or renounce"),Pair("abscond","verb - to hide or conceal"),Pair("admonish","verb - to praise or reward"),Pair("bolster","verb - to shore up or support"),Pair("catalyst","noun - something that speeds up a process or causes action"))
+    var mapOfMeanings = mapOf(Pair("abjure","verb - to reject or renounce"),Pair("abscond","verb - to hide or conceal"),Pair("admonish","verb - to praise or reward"),Pair("bolster","verb - to shore up or support"),Pair("catalyst","noun - something that speeds up a process or causes action"),
+        Pair("discern","verb - To diffrenciate"))
 
 }

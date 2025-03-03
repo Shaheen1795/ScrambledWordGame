@@ -43,7 +43,9 @@ import androidx.compose.ui.unit.sp
 import com.example.scrambledwordgame.R
 import com.example.scrambledwordgame.data.Score
 import com.example.scrambledwordgame.data.Scores.scores
+import com.example.scrambledwordgame.ui.InfoDialog
 import com.example.scrambledwordgame.ui.theme.Yellow
+import com.example.scrambledwordgame.ui.theme.YellowishWhte
 import com.example.scrambledwordgame.utils.formatMillisToMinutesAndSeconds
 
 
@@ -57,11 +59,15 @@ import com.example.scrambledwordgame.utils.formatMillisToMinutesAndSeconds
             .padding(20.dp),
     ){
 
-            BasicDropdownMenu(modifier = Modifier.align(Alignment.TopStart))
-            Column(modifier = Modifier.align(Alignment.TopCenter)) {
+
+            Row(modifier = Modifier.align(Alignment.TopStart).background(YellowishWhte).fillMaxSize().padding(0.dp,15.dp,0.dp,0.dp)){
+                BasicDropdownMenu(modifier = Modifier.padding(2.dp))
+
+            }
+            Column(modifier = Modifier.align(Alignment.TopCenter).padding(10.dp)) {
                 Text("Scoreboard", fontFamily = FontFamily.Monospace, modifier = Modifier
                     .align(Alignment.CenterHorizontally)
-                    .padding(20.dp, 50.dp, 20.dp, 5.dp), fontSize = 30.sp)
+                    .padding(20.dp, 50.dp, 20.dp, 5.dp), fontSize = 20.sp)
                 ThreeColumnTable(scores)
             }
             Button(
@@ -132,11 +138,15 @@ fun ThreeColumnTable(tableData: List<Score>) {
 fun BasicDropdownMenu(modifier: Modifier) {
     var expanded by remember { mutableStateOf(false) }
     val items = listOf("About")
-    var selectedItem by remember { mutableStateOf("Select an option") }
     val context = LocalContext.current
+    var showDialog by remember{ mutableStateOf(false) }
+    if(showDialog){
+       InfoDialog(title = "About", message = context.getString(R.string.about)) {
+           showDialog = false
+       }
+    }
     Column(modifier = modifier) {
         IconButton(onClick = { expanded = true }) {
-
             Image(painter = painterResource(R.drawable.menu),"")
         }
 
@@ -148,7 +158,7 @@ fun BasicDropdownMenu(modifier: Modifier) {
                 DropdownMenuItem(
                     text = { Text(text = item) },
                     onClick = {
-                        Toast.makeText(context, context.getString(R.string.about), Toast.LENGTH_LONG).show()
+                        showDialog  = true
                         expanded = false
                     }
                 )

@@ -17,6 +17,10 @@ fun shuffleWord(word: String): String {
 
 }
 
+fun getWordScorePercentage(score:Float):Float{
+    return ((score/(Words.LIST_SIZE*1.0F))*100)
+}
+
 fun createShuffledDict(mapOfWords: MutableMap<String, String >,level: Level){
     val words = Words.mapOfWords.getValue(level)
     for(word in words){
@@ -24,15 +28,7 @@ fun createShuffledDict(mapOfWords: MutableMap<String, String >,level: Level){
     }
 }
 
-fun getPairofScoreMappings(listOfscores:List<Score>):List<Pair<String,String>>{
 
-    var mutableList = mutableListOf<Pair<String,String>>()
-    for(score in listOfscores){
-        mutableList.add(Pair(score.name,score.score.toString()))
-    }
-    return mutableList
-
-}
 
 fun formatMillisToMinutesAndSeconds(millis: Long): String {
     require(millis >= 0) { "Milliseconds must be non-negative" }

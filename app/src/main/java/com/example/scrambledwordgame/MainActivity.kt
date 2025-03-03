@@ -25,6 +25,7 @@ import com.example.scrambledwordgame.ui.screens.HomeScreenPage
 import com.example.scrambledwordgame.ui.screens.ScoreScreen
 import com.example.scrambledwordgame.ui.screens.ShowShuffledWord
 import com.example.scrambledwordgame.ui.theme.ScrambledWordGameTheme
+import com.example.scrambledwordgame.utils.getWordScorePercentage
 import com.example.scrambledwordgame.viewmodel.GameStatus
 import com.example.scrambledwordgame.viewmodel.GameUiState
 import com.example.scrambledwordgame.viewmodel.GameViewModel
@@ -35,7 +36,6 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             ScrambledWordGameTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -59,7 +59,7 @@ fun GameNavigationGraph( lifecycleOwner: LifecycleOwner,gameViewModel: GameViewM
         composable(route = GameStatus.STARTED.name) {
             HomeScreenPage {
                 gameViewModel.startTimerForCurrentSession()
-                navController.navigate("${GameStatus.IN_PROGRESS.name}/${gameViewModel.getCurrWord()}") }
+                navController.navigate("${GameStatus.IN_PROGRESS.name}/${gameViewModel.getCurrWord(false)}") }
         }
         composable(route = "${GameStatus.IN_PROGRESS.name}/{currentWord}") { navBackStackEntry ->
             val current = navBackStackEntry.arguments?.getString("currentWord")
@@ -69,12 +69,12 @@ fun GameNavigationGraph( lifecycleOwner: LifecycleOwner,gameViewModel: GameViewM
                         gameViewModel.validateWord(it)
                     }, it, {
                         navController.navigate(GameStatus.FINISHED.name)
-                    }
+                    },gameViewModel
                 )
             }
         }
         composable(route = GameStatus.FINISHED.name) {
-            ScoreScreen(getWordScorePercentage(gameViewModel.score)) {
+            ScoreScreen(getWordScorePercentage(gameViewModel.score).toString()) {
                 navController.navigate(GameStatus.STARTED.name)
                 gameViewModel.actionOnEndGame()
                 gameViewModel.reset()
@@ -92,7 +92,6 @@ fun GameNavigationGraph( lifecycleOwner: LifecycleOwner,gameViewModel: GameViewM
                             popUpTo(GameStatus.IN_PROGRESS.name){
                                 inclusive = true
                             }
-                            launchSingleTop = true
                         }
                     }
                     is GameUiState.STARTED -> navController.navigate(GameStatus.STARTED.name)
@@ -103,7 +102,4 @@ fun GameNavigationGraph( lifecycleOwner: LifecycleOwner,gameViewModel: GameViewM
         }
     }
 
-   fun getWordScorePercentage(score:Int):String{
 
-       return (score*100/Words.LIST_SIZE).toString()
-   }

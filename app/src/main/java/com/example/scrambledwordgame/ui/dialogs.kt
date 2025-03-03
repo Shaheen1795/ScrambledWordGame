@@ -9,14 +9,13 @@ import androidx.compose.runtime.Composable
 fun InfoDialog( title: String,
                 message: String,
                 onDismissRequest: () -> Unit,
-                onConfirmation: () -> Unit,
 ){
     AlertDialog(
     onDismissRequest = { onDismissRequest() },
     title = { Text(title) },
     text = { Text(message) },
     confirmButton = {
-        Button(onClick = { onConfirmation() }) {
+        Button(onClick = { onDismissRequest()}) {
             Text("OK")
         }
     }
