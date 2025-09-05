@@ -1,5 +1,6 @@
-package com.example.scrambledwordgame.ui.screens
+package com.fairytale.scrambledwordgame.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,13 +19,15 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun ScoreScreen(score:String,onClick:()->Unit){
+    BackHandler(enabled = true) {
+
+    }
     Column(modifier = Modifier.fillMaxSize().background(Color.White), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center){
         Text(text = "Your Score is ${score}", modifier = Modifier.padding(0.dp,10.dp,0.dp,10.dp), fontSize = 30.sp, fontFamily = FontFamily.Monospace)
 
         Button(onClick = onClick
         ) {
-            Text("Start Over")
-
+            Text("StartOver")
         }
     }
 }

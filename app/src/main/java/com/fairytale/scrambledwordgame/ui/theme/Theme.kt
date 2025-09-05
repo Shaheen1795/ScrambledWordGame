@@ -1,6 +1,5 @@
-package com.example.scrambledwordgame.ui.theme
+package com.fairytale.scrambledwordgame.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

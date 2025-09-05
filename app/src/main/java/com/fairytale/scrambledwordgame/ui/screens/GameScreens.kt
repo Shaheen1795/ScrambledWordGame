@@ -1,5 +1,6 @@
-package com.example.scrambledwordgame.ui.screens
+package com.fairytale.scrambledwordgame.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,12 +11,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,24 +22,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.scrambledwordgame.R
-import com.example.scrambledwordgame.ui.InfoDialog
-import com.example.scrambledwordgame.viewmodel.GameViewModel
+import com.fairytale.scrambledwordgame.ui.InfoDialog
+import com.fairytale.scrambledwordgame.viewmodels.GameViewModel
 
-@Preview
 @Composable
-fun ShowShuffledWord(onValueChange:(String)-> Boolean = {false}, currentWord:String="", onEndGame:() -> Unit = {}, gameViewModel: GameViewModel = GameViewModel()){
+fun ShowShuffledWord(onValueChange:(String)-> Boolean = {false}, currentWord:String="", onEndGame:() -> Unit = {}, gameViewModel: GameViewModel){
+    BackHandler(enabled = true) {
+        // Do nothing (blocks back press)
+    }
     Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
 
         if(gameViewModel.showHintDialog){

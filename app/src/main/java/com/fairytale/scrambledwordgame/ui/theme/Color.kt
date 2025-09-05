@@ -1,4 +1,4 @@
-package com.example.scrambledwordgame.ui.theme
+package com.fairytale.scrambledwordgame.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

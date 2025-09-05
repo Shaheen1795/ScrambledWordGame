@@ -1,30 +1,23 @@
-package com.example.scrambledwordgame.ui.screens
+package com.fairytale.scrambledwordgame.ui.screens
 
-import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,18 +33,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.scrambledwordgame.R
-import com.example.scrambledwordgame.data.Score
-import com.example.scrambledwordgame.data.Scores.scores
-import com.example.scrambledwordgame.ui.InfoDialog
-import com.example.scrambledwordgame.ui.theme.Yellow
-import com.example.scrambledwordgame.ui.theme.YellowishWhte
-import com.example.scrambledwordgame.utils.formatMillisToMinutesAndSeconds
+import com.fairytale.scrambledwordgame.R
+import com.fairytale.scrambledwordgame.data.Score
+import com.fairytale.scrambledwordgame.data.Scores.scores
+import com.fairytale.scrambledwordgame.ui.theme.Yellow
+import com.fairytale.scrambledwordgame.ui.theme.YellowishWhte
+import com.fairytale.scrambledwordgame.ui.InfoDialog
+import com.fairytale.scrambledwordgame.utils.formatMillisToMinutesAndSeconds
+import com.fairytale.scrambledwordgame.viewmodels.GameViewModel
+import com.fairytale.scrambledwordgame.viewmodels.HomeScreenUiState
+import kotlin.math.roundToInt
 
 
-@Preview
-    @Composable
-    fun HomeScreenPage(onClickAction:()-> Unit = {}){
+@Composable
+    fun HomeScreenPage(gameViewModel: GameViewModel, onClickAction:()-> Unit = {}){
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -59,16 +54,30 @@ import com.example.scrambledwordgame.utils.formatMillisToMinutesAndSeconds
             .padding(20.dp),
     ){
 
-
+            val uiState = gameViewModel.homeScreenUiState.collectAsState()
             Row(modifier = Modifier.align(Alignment.TopStart).background(YellowishWhte).fillMaxSize().padding(0.dp,15.dp,0.dp,0.dp)){
                 BasicDropdownMenu(modifier = Modifier.padding(2.dp))
 
             }
             Column(modifier = Modifier.align(Alignment.TopCenter).padding(10.dp)) {
-                Text("Scoreboard", fontFamily = FontFamily.Monospace, modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .padding(20.dp, 50.dp, 20.dp, 5.dp), fontSize = 20.sp)
-                ThreeColumnTable(scores)
+                when(val state = uiState.value){
+                    is HomeScreenUiState.Loading -> {
+                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+                    is HomeScreenUiState.Success -> {
+                        Text("Scoreboard", fontFamily = FontFamily.Monospace, modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(20.dp, 50.dp, 20.dp, 5.dp), fontSize = 20.sp)
+                        ThreeColumnTable(state.scores)
+                    }
+                    is HomeScreenUiState.Error -> {
+                        InfoDialog("Error","Something went wrong") {
+                            gameViewModel.closeDialog()
+                        }
+                    }
+                }
+
             }
             Button(
                 onClickAction, modifier = Modifier
@@ -123,7 +132,7 @@ fun ThreeColumnTable(tableData: List<Score>) {
                         .fillMaxWidth()
                 ){
                     TableCell(row.name, Modifier.weight(1f))
-                    TableCell(row.score.toString(), Modifier.weight(1f))
+                    TableCell(row.score.roundToInt().toString(), Modifier.weight(1f))
                     TableCell(formatMillisToMinutesAndSeconds(row.time), Modifier.weight(1f))
                 }
 

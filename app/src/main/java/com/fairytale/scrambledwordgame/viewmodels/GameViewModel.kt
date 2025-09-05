@@ -1,9 +1,7 @@
-package com.example.scrambledwordgame.viewmodel
+package com.fairytale.scrambledwordgame.viewmodels
 
 import android.util.Log
-import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -13,17 +11,21 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.scrambledwordgame.Hint
-import com.example.scrambledwordgame.data.Level
-import com.example.scrambledwordgame.data.Score
-import com.example.scrambledwordgame.data.Scores
-import com.example.scrambledwordgame.data.Words
-import com.example.scrambledwordgame.utils.createShuffledDict
-import com.example.scrambledwordgame.utils.getWordScorePercentage
+import com.fairytale.scrambledwordgame.Hint
+import com.fairytale.scrambledwordgame.data.Level
+import com.fairytale.scrambledwordgame.data.Score
+import com.fairytale.scrambledwordgame.data.Scores
+import com.fairytale.scrambledwordgame.data.Words
+import com.fairytale.scrambledwordgame.database.ScoreDao
+import com.fairytale.scrambledwordgame.utils.createShuffledDict
+import com.fairytale.scrambledwordgame.utils.getWordScorePercentage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -42,7 +44,13 @@ sealed class GameUiState(open var event:GameStatus){
     data class FINISHED(override var event: GameStatus = GameStatus.FINISHED): GameUiState(event)
 }
 
-class GameViewModel: ViewModel() {
+sealed class HomeScreenUiState(){
+    object Loading : HomeScreenUiState()
+    data class Success(val scores: List<Score>) : HomeScreenUiState()
+    data class Error(val exception: Throwable) : HomeScreenUiState()
+}
+
+class GameViewModel(dao: ScoreDao): ViewModel() {
 
     private var mutableMap:MutableMap<String, String> = mutableMapOf()
     private var currentInd = Random.nextInt(0,10)
@@ -59,13 +67,44 @@ class GameViewModel: ViewModel() {
     var showHintDialog by mutableStateOf(false)
     private var diffScore by mutableFloatStateOf(0.0F)
     var hintButtonText by mutableStateOf("Hint")
-
+    var _homeScreenUiState = MutableStateFlow<HomeScreenUiState>(HomeScreenUiState.Loading)
+    val homeScreenUiState: StateFlow<HomeScreenUiState>
+        get() = _homeScreenUiState.asStateFlow()
 
     var startTimer = 0L
     private var endTimer = 0L
+    private val scoreDao: ScoreDao = dao
+    private var scoreList = mutableListOf<Score>()
 
     init{
         setMapOfWords(currentLevel)
+        getScores()
+    }
+
+    fun closeDialog(){
+        _homeScreenUiState.value = HomeScreenUiState.Success(scoreList)
+    }
+
+    fun getScores(){
+
+        _homeScreenUiState.value = HomeScreenUiState.Loading
+        viewModelScope.launch {
+            withContext(Dispatchers.IO){
+                try{
+                    val listOfScores = scoreDao.getAllScores()
+                    scoreList.addAll(listOfScores)
+                    if(listOfScores.isNullOrEmpty()){
+                        _homeScreenUiState.value = HomeScreenUiState.Success(emptyList())
+                    }
+                    else _homeScreenUiState.value = HomeScreenUiState.Success(listOfScores)
+
+                }
+                catch (e:Exception){
+                    Log.v("Exception","$e")
+                    _homeScreenUiState.value = HomeScreenUiState.Error(e)
+                }
+            }
+        }
     }
 
     fun startTimerForCurrentSession(){
@@ -85,6 +124,7 @@ class GameViewModel: ViewModel() {
         viewModelScope.launch {
               usedIndexes.clear()
               wordStatus = false
+              scoreList.clear()
               channel.send(GameUiState.STARTED())
 
               withContext(Dispatchers.IO){
@@ -167,7 +207,13 @@ class GameViewModel: ViewModel() {
 
     fun actionOnEndGame(){
         endTimerForCurrentSession()
-        Scores.scores.add(Score("Session $counter",getWordScorePercentage(score),endTimer-startTimer))
+        val currScore = Score(scoreList.size + 1,"Session ${scoreList.size + 1}",getWordScorePercentage(score),endTimer-startTimer)
+        viewModelScope.launch {
+            withContext(Dispatchers.IO){
+                scoreDao.insertScore(currScore)
+            }
+            getScores()
+        }
     }
 
 
@@ -191,12 +237,16 @@ class GameViewModel: ViewModel() {
 
     companion object {
         const val OFFSET = 1.0F
+    }
 
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-
-                GameViewModel()
+    class GameViewModelFactory(private val dao: ScoreDao) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(GameViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return GameViewModel(dao) as T
             }
+            throw IllegalArgumentException("Unknown ViewModel class")
         }
     }
+
 }

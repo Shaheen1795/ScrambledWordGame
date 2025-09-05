@@ -1,37 +1,32 @@
-package com.example.scrambledwordgame
+package com.fairytale.scrambledwordgame
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.times
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.scrambledwordgame.data.Words
-import com.example.scrambledwordgame.ui.screens.HomeScreenPage
-import com.example.scrambledwordgame.ui.screens.ScoreScreen
-import com.example.scrambledwordgame.ui.screens.ShowShuffledWord
-import com.example.scrambledwordgame.ui.theme.ScrambledWordGameTheme
-import com.example.scrambledwordgame.utils.getWordScorePercentage
-import com.example.scrambledwordgame.viewmodel.GameStatus
-import com.example.scrambledwordgame.viewmodel.GameUiState
-import com.example.scrambledwordgame.viewmodel.GameViewModel
-import kotlinx.coroutines.flow.asStateFlow
+import com.fairytale.scrambledwordgame.database.DbProvider
+import com.fairytale.scrambledwordgame.ui.screens.HomeScreenPage
+import com.fairytale.scrambledwordgame.ui.screens.ScoreScreen
+import com.fairytale.scrambledwordgame.ui.screens.ShowShuffledWord
+import com.fairytale.scrambledwordgame.ui.theme.ScrambledWordGameTheme
+import com.fairytale.scrambledwordgame.utils.getWordScorePercentage
+import com.fairytale.scrambledwordgame.viewmodels.GameStatus
+import com.fairytale.scrambledwordgame.viewmodels.GameUiState
+import com.fairytale.scrambledwordgame.viewmodels.GameViewModel
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +34,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             ScrambledWordGameTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    val gameViewModel: GameViewModel by viewModels()
+
+                    val db = DbProvider.build(applicationContext)
+                    val dao = db.scoreDao()
+
+                    val gameViewModel: GameViewModel by viewModels {
+                        GameViewModel.GameViewModelFactory(dao)
+                    }
                     GameNavigationGraph(this, gameViewModel,modifier = Modifier.padding(innerPadding))
                 }
             }
@@ -57,9 +58,12 @@ fun GameNavigationGraph( lifecycleOwner: LifecycleOwner,gameViewModel: GameViewM
     NavHost(navController, startDestination = GameStatus.STARTED.name) {
 
         composable(route = GameStatus.STARTED.name) {
-            HomeScreenPage {
-                gameViewModel.startTimerForCurrentSession()
-                navController.navigate("${GameStatus.IN_PROGRESS.name}/${gameViewModel.getCurrWord(false)}") }
+            HomeScreenPage(
+                gameViewModel,
+                {
+                    gameViewModel.startTimerForCurrentSession()
+                    navController.navigate("${GameStatus.IN_PROGRESS.name}/${gameViewModel.getCurrWord(false)}")
+                })
         }
         composable(route = "${GameStatus.IN_PROGRESS.name}/{currentWord}") { navBackStackEntry ->
             val current = navBackStackEntry.arguments?.getString("currentWord")
@@ -68,16 +72,22 @@ fun GameNavigationGraph( lifecycleOwner: LifecycleOwner,gameViewModel: GameViewM
                     {
                         gameViewModel.validateWord(it)
                     }, it, {
-                        navController.navigate(GameStatus.FINISHED.name)
+                        navController.navigate(GameStatus.FINISHED.name){
+                            popUpTo(GameStatus.IN_PROGRESS.name){
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },gameViewModel
                 )
             }
         }
         composable(route = GameStatus.FINISHED.name) {
-            ScoreScreen(getWordScorePercentage(gameViewModel.score).toString()) {
-                navController.navigate(GameStatus.STARTED.name)
+            ScoreScreen(getWordScorePercentage(gameViewModel.score).roundToInt().toString()) {
                 gameViewModel.actionOnEndGame()
                 gameViewModel.reset()
+                navController.navigate(GameStatus.STARTED.name)
             }
         }
     }
@@ -92,10 +102,24 @@ fun GameNavigationGraph( lifecycleOwner: LifecycleOwner,gameViewModel: GameViewM
                             popUpTo(GameStatus.IN_PROGRESS.name){
                                 inclusive = true
                             }
+                            launchSingleTop = true
+                            restoreState = true
                         }
                     }
-                    is GameUiState.STARTED -> navController.navigate(GameStatus.STARTED.name)
-                    is GameUiState.FINISHED -> navController.navigate(it.event.name)
+                    is GameUiState.STARTED -> navController.navigate(GameStatus.STARTED.name){
+                        popUpTo(GameStatus.STARTED.name){
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                    is GameUiState.FINISHED -> navController.navigate(it.event.name){
+                        popUpTo(GameStatus.IN_PROGRESS.name){
+                            inclusive = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 }
             }
 

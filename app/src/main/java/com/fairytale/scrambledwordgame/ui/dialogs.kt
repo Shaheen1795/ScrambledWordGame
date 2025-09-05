@@ -1,4 +1,4 @@
-package com.example.scrambledwordgame.ui
+package com.fairytale.scrambledwordgame.ui
 
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button

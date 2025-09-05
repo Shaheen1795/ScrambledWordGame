@@ -1,8 +1,8 @@
-package com.example.scrambledwordgame.utils
+package com.fairytale.scrambledwordgame.utils
 
-import com.example.scrambledwordgame.data.Level
-import com.example.scrambledwordgame.data.Score
-import com.example.scrambledwordgame.data.Words
+
+import com.fairytale.scrambledwordgame.data.Level
+import com.fairytale.scrambledwordgame.data.Words
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -18,7 +18,7 @@ fun shuffleWord(word: String): String {
 }
 
 fun getWordScorePercentage(score:Float):Float{
-    return ((score/(Words.LIST_SIZE*1.0F))*100)
+    return ((score/(Words.wordsList_level1.size*1.0F))*100)
 }
 
 fun createShuffledDict(mapOfWords: MutableMap<String, String >,level: Level){
@@ -27,8 +27,6 @@ fun createShuffledDict(mapOfWords: MutableMap<String, String >,level: Level){
         mapOfWords[word] = shuffleWord(word)
     }
 }
-
-
 
 fun formatMillisToMinutesAndSeconds(millis: Long): String {
     require(millis >= 0) { "Milliseconds must be non-negative" }
