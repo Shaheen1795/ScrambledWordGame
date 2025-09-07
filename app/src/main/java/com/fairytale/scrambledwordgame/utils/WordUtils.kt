@@ -8,13 +8,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 fun shuffleWord(word: String): String {
-
-    val current = StringBuilder(word)
-    val reversed = current.reverse()
-
-    val random = Random.nextInt(0,word.length/2+1)
-    return  reversed.substring(random) + reversed.substring(0,random)
-
+    val random = Random.nextInt(1,word.length)
+    return  word.substring(random) + word.substring(0,random)
 }
 
 fun getWordScorePercentage(score:Float):Float{
