@@ -137,6 +137,7 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
     fun skip(){
         viewModelScope.launch {
             wordStatus = false
+            usedIndexes.remove(currentIndex)
             channel.send(GameUiState.PROGRESS(GameStatus.IN_PROGRESS, getCurrWord(true)))
 
         }
