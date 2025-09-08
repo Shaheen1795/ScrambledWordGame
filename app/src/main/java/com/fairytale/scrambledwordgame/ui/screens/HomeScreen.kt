@@ -103,6 +103,7 @@ fun TableHeaderCell(text: String, modifier: Modifier = Modifier) {
 fun TableCell(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text,
+        color = Color.DarkGray,
         modifier = modifier
             .padding(8.dp),
         textAlign = TextAlign.Center

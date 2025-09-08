@@ -9,7 +9,7 @@ import kotlin.random.Random
 
 fun shuffleWord(word: String): String {
     val random = Random.nextInt(1,word.length)
-    return  word.substring(random) + word.substring(0,random)
+    return  word.substring(random) + word.substring(0,random).reversed()
 }
 
 fun getWordScorePercentage(score:Float):Float{

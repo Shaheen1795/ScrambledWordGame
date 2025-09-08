@@ -5,9 +5,9 @@ enum class Level{
 
 object Words {
 
-    val wordsList_level1 :List<String> = listOf("abjure","abscond","admonish","bolster","catalyst","condone","eminent","discern","guile","frugal",
+    val wordsList_level1 :List<String> = listOf("abjure","abscond","admonish","bolster","catalyst","condone","eminent","discern","frugal",
      "iconoclast","munificent","opprobrium","salubrious","soporific","ubiquitous","prodigious","prevaricate","perfunctory","innocuous",
-    "inimical","indefatigable","fortuitous","bolster","catalyst","condone","eminent","discern","guile","frugal")
+    "inimical","indefatigable","fortuitous","guile")
 
     var mapOfWords = mapOf(Pair(Level.L1,wordsList_level1))
 

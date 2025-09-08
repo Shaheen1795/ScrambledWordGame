@@ -84,7 +84,7 @@ fun GameNavigationGraph( lifecycleOwner: LifecycleOwner,gameViewModel: GameViewM
             }
         }
         composable(route = GameStatus.FINISHED.name) {
-            ScoreScreen(getWordScorePercentage(gameViewModel.score).roundToInt().toString()) {
+            ScoreScreen(gameViewModel.message,getWordScorePercentage(gameViewModel.score).roundToInt().toString()) {
                 gameViewModel.actionOnEndGame()
                 gameViewModel.reset()
                 navController.navigate(GameStatus.STARTED.name)

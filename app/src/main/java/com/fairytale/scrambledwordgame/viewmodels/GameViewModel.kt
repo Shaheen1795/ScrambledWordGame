@@ -53,12 +53,13 @@ sealed class HomeScreenUiState(){
 class GameViewModel(dao: ScoreDao): ViewModel() {
 
     private var mutableMap:MutableMap<String, String> = mutableMapOf()
-    private var currentInd = Random.nextInt(0,10)
+    private var size = Words.mapOfWords.getValue(Level.L1).size
+    private var currentInd = Random.nextInt(0,size)
     val currentLevel = Level.L1
     var currentIndex by mutableIntStateOf(currentInd)
     var score by mutableFloatStateOf(0.0F)
     var wordStatus by mutableStateOf(false )
-    private var usedIndexes =  mutableSetOf<Int>(currentInd)
+    private var usedIndexes =  mutableListOf<Int>()
     var channel = Channel<GameUiState>(1)
     var flow: Flow<GameUiState> = channel.receiveAsFlow()
     private var counter:Int by mutableIntStateOf(0)
@@ -75,10 +76,19 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
     private var endTimer = 0L
     private val scoreDao: ScoreDao = dao
     private var scoreList = mutableListOf<Score>()
+    var message by mutableStateOf("")
 
     init{
         setMapOfWords(currentLevel)
         getScores()
+        populateIndex()
+    }
+
+    fun populateIndex(){
+        for(i in 0 until size){
+            usedIndexes.add(i)
+        }
+        usedIndexes.remove(currentIndex)
     }
 
     fun closeDialog(){
@@ -137,9 +147,7 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
     fun skip(){
         viewModelScope.launch {
             wordStatus = false
-            usedIndexes.remove(currentIndex)
             channel.send(GameUiState.PROGRESS(GameStatus.IN_PROGRESS, getCurrWord(true)))
-
         }
     }
 
@@ -196,14 +204,13 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
         return status
     }
 
-    private fun fetchIndex(): Int {
-
-        var index = Random.nextInt(0,Words.mapOfWords.getValue(currentLevel).size)
-        while(usedIndexes.contains(index)){
-            index = Random.nextInt(0,Words.mapOfWords.getValue(currentLevel).size)
-        }
-        usedIndexes.add(index)
-        return index
+    private fun fetchIndex(skip: Boolean = false ): Int {
+        var temp = currentIndex
+        var index = Random.nextInt(0, usedIndexes.size)
+        var currentValue = usedIndexes[index]
+        usedIndexes.remove(currentValue)
+        if(skip) usedIndexes.add(temp)
+        return currentValue
     }
 
     fun actionOnEndGame(){
@@ -219,12 +226,16 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
 
 
     fun getCurrWord(skip:Boolean = false ): String{
-        if(usedIndexes.size==Words.mapOfWords.getValue(currentLevel).size){
-               return ""
+        if(usedIndexes.isEmpty()){
+               viewModelScope.launch {
+                   channel.send(GameUiState.FINISHED(GameStatus.FINISHED,
+                   ))
+                   message =  "Congratulations, You mastered $size GRE words"
+               }
+            return ""
         }
-
         if(wordStatus || skip){
-            currentIndex = fetchIndex()
+            currentIndex = fetchIndex(skip)
         }
         unlockHint = 4
         diffScore = 0.0F
