@@ -1,23 +1,24 @@
 package com.fairytale.scrambledwordgame.viewmodels
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.fairytale.scrambledwordgame.Hint
 import com.fairytale.scrambledwordgame.data.Level
 import com.fairytale.scrambledwordgame.data.Score
-import com.fairytale.scrambledwordgame.data.Scores
 import com.fairytale.scrambledwordgame.data.Words
 import com.fairytale.scrambledwordgame.database.ScoreDao
 import com.fairytale.scrambledwordgame.utils.createShuffledDict
+import com.fairytale.scrambledwordgame.utils.formatMillisToMinutesAndSeconds
 import com.fairytale.scrambledwordgame.utils.getWordScorePercentage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -29,12 +30,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.LocalDateTime
+import kotlin.concurrent.fixedRateTimer
 import kotlin.random.Random
 enum class GameStatus{
 
     STARTED,
     IN_PROGRESS,
     FINISHED
+}
+
+enum class SortScores{
+    SCORE_ASC,
+    SCORE_DESC,
+    TIME_ASC,
+    TIME_DESC,
+    SCORE_NOSORT
 }
 
 sealed class GameUiState(open var event:GameStatus){
@@ -46,8 +57,11 @@ sealed class GameUiState(open var event:GameStatus){
 
 sealed class HomeScreenUiState(){
     object Loading : HomeScreenUiState()
-    data class Success(val scores: List<Score>) : HomeScreenUiState()
+    data class Success(val scores: List<Score>, val direction: Boolean = true) : HomeScreenUiState()
     data class Error(val exception: Throwable) : HomeScreenUiState()
+}
+sealed class TimerUiState{
+    data class CurrentTimeUiState(val time:String):TimerUiState()
 }
 
 class GameViewModel(dao: ScoreDao): ViewModel() {
@@ -62,7 +76,6 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
     private var usedIndexes =  mutableListOf<Int>()
     var channel = Channel<GameUiState>(1)
     var flow: Flow<GameUiState> = channel.receiveAsFlow()
-    private var counter:Int by mutableIntStateOf(0)
     private var unlockHint:Int by mutableIntStateOf(4)
     private var currentHint by mutableStateOf(Hint("","",""))
     var showHintDialog by mutableStateOf(false)
@@ -71,12 +84,21 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
     var _homeScreenUiState = MutableStateFlow<HomeScreenUiState>(HomeScreenUiState.Loading)
     val homeScreenUiState: StateFlow<HomeScreenUiState>
         get() = _homeScreenUiState.asStateFlow()
-
-    var startTimer = 0L
-    private var endTimer = 0L
+    var _timerUiState = MutableStateFlow<TimerUiState>(TimerUiState.CurrentTimeUiState(""))
+    val timerUiState: StateFlow<TimerUiState>
+        get() = _timerUiState.asStateFlow()
     private val scoreDao: ScoreDao = dao
-    private var scoreList = mutableListOf<Score>()
+    private var scoreList = mutableSetOf<Score>()
     var message by mutableStateOf("")
+    var elapsedSeconds by
+        mutableLongStateOf(0L)
+    var timing by mutableStateOf("")
+    var startTime by mutableLongStateOf(0L)
+    var pauseTime by mutableStateOf(0L)
+
+    var timer: java.util.Timer? = null
+    var isTimerRunning by mutableStateOf(false)
+    private var scoreListSize by mutableIntStateOf(0)
 
     init{
         setMapOfWords(currentLevel)
@@ -84,7 +106,34 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
         populateIndex()
     }
 
+    fun startTimer() {
+           startTime = System.currentTimeMillis()
+
+           if(!isTimerRunning){
+               timer = fixedRateTimer(initialDelay = 0, period = 1000) {
+                   elapsedSeconds = System.currentTimeMillis() - startTime
+                   pauseTime = elapsedSeconds
+                   timing = formatMillisToMinutesAndSeconds(elapsedSeconds)
+                   _timerUiState.value = TimerUiState.CurrentTimeUiState(timing)
+               }
+               isTimerRunning = true
+           }
+    }
+
+
+    fun resetTimer() {
+        timer?.cancel()
+        startTime = 0
+        isTimerRunning = false
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        timer?.cancel()
+    }
+
     fun populateIndex(){
+        currentIndex  = Random.nextInt(0, size)
         for(i in 0 until size){
             usedIndexes.add(i)
         }
@@ -92,21 +141,47 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
     }
 
     fun closeDialog(){
-        _homeScreenUiState.value = HomeScreenUiState.Success(scoreList)
+        _homeScreenUiState.value = HomeScreenUiState.Success(scoreList.toList())
     }
 
-    fun getScores(){
+    fun getScoresByType(sortType: SortScores): List<Score>{
+        var listOfScores = emptyList<Score>()
+        when(sortType){
+            SortScores.SCORE_ASC -> {
+                listOfScores = scoreDao.getScoresByScoreAscending()
+            }
+            SortScores.SCORE_DESC -> {
+                listOfScores = scoreDao.getScoresByScoreDescending()
+            }
+            SortScores.TIME_ASC -> {
+                listOfScores = scoreDao.getScoresByTimeAscending()
+            }
+            SortScores.TIME_DESC -> {
+                listOfScores = scoreDao.getScoresByTimeDescending()
+            }
+            SortScores.SCORE_NOSORT -> {
+                listOfScores = scoreDao.getAllScores()
+            }
 
+        }
+
+        return listOfScores
+    }
+
+
+
+    fun getScores(sortType: SortScores = SortScores.SCORE_NOSORT, direction: Boolean = false){
         _homeScreenUiState.value = HomeScreenUiState.Loading
         viewModelScope.launch {
             withContext(Dispatchers.IO){
                 try{
-                    val listOfScores = scoreDao.getAllScores()
+                    val listOfScores = getScoresByType(sortType)
                     scoreList.addAll(listOfScores)
-                    if(listOfScores.isNullOrEmpty()){
+                    scoreListSize = Math.max(scoreListSize,scoreList.size)
+                    if(listOfScores.isEmpty()){
                         _homeScreenUiState.value = HomeScreenUiState.Success(emptyList())
                     }
-                    else _homeScreenUiState.value = HomeScreenUiState.Success(listOfScores)
+                    else _homeScreenUiState.value = HomeScreenUiState.Success(listOfScores, direction)
 
                 }
                 catch (e:Exception){
@@ -115,15 +190,6 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
                 }
             }
         }
-    }
-
-    fun startTimerForCurrentSession(){
-        counter++
-        startTimer = System.currentTimeMillis()
-    }
-
-    private fun endTimerForCurrentSession(){
-        endTimer = System.currentTimeMillis()
     }
 
     private fun setMapOfWords(level: Level){
@@ -135,12 +201,23 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
               usedIndexes.clear()
               wordStatus = false
               scoreList.clear()
+              resetTimer()
+              populateIndex()
               channel.send(GameUiState.STARTED())
 
               withContext(Dispatchers.IO){
                   delay(1000)
                   score = 0.0F
               }
+        }
+    }
+
+    fun deleteScore(id:Int){
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                scoreDao.deleteScoreById(id)
+                getScores()
+            }
         }
     }
 
@@ -196,6 +273,7 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
                 }
                 else {
                     channel.send(GameUiState.FINISHED())
+                    isTimerRunning = false
                 }
             }
 
@@ -213,15 +291,19 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
         return currentValue
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun actionOnEndGame(){
-        endTimerForCurrentSession()
-        val currScore = Score(scoreList.size + 1,"Session ${scoreList.size + 1}",getWordScorePercentage(score),endTimer-startTimer)
+        val currScore = Score(System.currentTimeMillis().toInt() ,LocalDateTime.now().format(
+            java.time.format.DateTimeFormatter.ofPattern("yy-MM-dd HH:mm")
+        ),getWordScorePercentage(score),elapsedSeconds)
+        scoreListSize = scoreListSize + 1
         viewModelScope.launch {
             withContext(Dispatchers.IO){
                 scoreDao.insertScore(currScore)
             }
             getScores()
         }
+        message = ""
     }
 
 

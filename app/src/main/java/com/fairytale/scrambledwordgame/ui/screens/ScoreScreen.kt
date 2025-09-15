@@ -24,9 +24,9 @@ fun ScoreScreen( message: String = "", score:String,onClick:()->Unit,){
     }
     Column(modifier = Modifier.fillMaxSize().background(Color.White).padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center){
         if(message.isNotEmpty()){
-            Text(text = message, modifier = Modifier.padding(10.dp), fontSize = 30.sp, fontFamily = FontFamily.Cursive, lineHeight = 40.sp, color =  Color.Magenta)
+            Text(text = message, modifier = Modifier.padding(10.dp), fontSize = 30.sp, fontFamily = FontFamily.Cursive, lineHeight = 40.sp, color =  Color.DarkGray)
         }
-        Text(text = "Your Score is ${score}", modifier = Modifier.padding(0.dp,10.dp,0.dp,10.dp), fontSize = 30.sp, fontFamily = FontFamily.Cursive)
+        Text(text = "Your Score is ${score}", modifier = Modifier.padding(0.dp,10.dp,0.dp,10.dp), fontSize = 30.sp, fontFamily = FontFamily.Cursive, color = Color.DarkGray)
 
         Button(onClick = onClick
         ) {
