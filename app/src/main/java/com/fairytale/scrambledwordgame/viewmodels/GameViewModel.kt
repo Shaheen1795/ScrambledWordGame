@@ -1,8 +1,6 @@
 package com.fairytale.scrambledwordgame.viewmodels
 
-import android.os.Build
 import android.util.Log
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -19,6 +17,7 @@ import com.fairytale.scrambledwordgame.data.Words
 import com.fairytale.scrambledwordgame.database.ScoreDao
 import com.fairytale.scrambledwordgame.utils.createShuffledDict
 import com.fairytale.scrambledwordgame.utils.formatMillisToMinutesAndSeconds
+import com.fairytale.scrambledwordgame.utils.getFormattedDate
 import com.fairytale.scrambledwordgame.utils.getWordScorePercentage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -30,7 +29,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.LocalDateTime
 import kotlin.concurrent.fixedRateTimer
 import kotlin.random.Random
 enum class GameStatus{
@@ -291,11 +289,10 @@ class GameViewModel(dao: ScoreDao): ViewModel() {
         return currentValue
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
+
     fun actionOnEndGame(){
-        val currScore = Score(System.currentTimeMillis().toInt() ,LocalDateTime.now().format(
-            java.time.format.DateTimeFormatter.ofPattern("yy-MM-dd HH:mm")
-        ),getWordScorePercentage(score),elapsedSeconds)
+        val currScore = Score(System.currentTimeMillis().toInt(), name = getFormattedDate(System.currentTimeMillis())
+        ,getWordScorePercentage(score),elapsedSeconds)
         scoreListSize = scoreListSize + 1
         viewModelScope.launch {
             withContext(Dispatchers.IO){

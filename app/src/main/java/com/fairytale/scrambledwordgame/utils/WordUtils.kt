@@ -3,6 +3,8 @@ package com.fairytale.scrambledwordgame.utils
 
 import com.fairytale.scrambledwordgame.data.Level
 import com.fairytale.scrambledwordgame.data.Words
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
@@ -21,6 +23,12 @@ fun createShuffledDict(mapOfWords: MutableMap<String, String >,level: Level){
     for(word in words){
         mapOfWords[word] = shuffleWord(word)
     }
+}
+
+fun getFormattedDate(millis: Long): String{
+    val sdf = SimpleDateFormat("yy-MM-dd HH:mm", Locale.getDefault())
+    val date = Date(millis)
+    return sdf.format(date)
 }
 
 fun formatMillisToMinutesAndSeconds(millis: Long): String {

@@ -1,6 +1,5 @@
 package com.fairytale.scrambledwordgame.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,6 +7,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,18 +30,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fairytale.scrambledwordgame.R
 import com.fairytale.scrambledwordgame.data.Score
-import com.fairytale.scrambledwordgame.data.Scores.scores
 import com.fairytale.scrambledwordgame.ui.theme.Yellow
 import com.fairytale.scrambledwordgame.ui.theme.YellowishWhte
 import com.fairytale.scrambledwordgame.ui.InfoDialog
@@ -54,46 +51,57 @@ import kotlin.math.roundToInt
 
 @Composable
     fun HomeScreenPage(gameViewModel: GameViewModel, onClickAction:()-> Unit = {}){
-    Box(
-        modifier = Modifier
+        Column( modifier = Modifier
             .fillMaxSize()
-            .background(Yellow)
-            .padding(20.dp),
-    ){
+            .background(Yellow),) {
 
-            val uiState = gameViewModel.homeScreenUiState.collectAsState()
-            Row(modifier = Modifier.align(Alignment.TopStart).background(YellowishWhte).fillMaxSize().padding(0.dp,15.dp,0.dp,0.dp)){
-                BasicDropdownMenu(modifier = Modifier.padding(2.dp))
-
+            Box(
+                modifier = Modifier
+                    .background(Yellow)
+                    .fillMaxWidth()
+                    ,
+            ){
+                Row(modifier = Modifier.align(Alignment.TopStart).background(YellowishWhte)){
+                    BasicDropdownMenu(modifier = Modifier.padding(2.dp))
+                }
             }
-            Column(modifier = Modifier.align(Alignment.TopCenter).padding(10.dp)) {
-                when(val state = uiState.value){
-                    is HomeScreenUiState.Loading -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                    }
-                    is HomeScreenUiState.Success -> {
-                        Text("Scoreboard", fontFamily = FontFamily.Monospace, modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(20.dp, 50.dp, 20.dp, 5.dp), fontSize = 20.sp
-                        , color = Color.DarkGray)
-                        ThreeColumnTable(state.scores, gameViewModel)
-                    }
-                    is HomeScreenUiState.Error -> {
-                        InfoDialog("Error","Something went wrong") {
-                            gameViewModel.closeDialog()
+            Box(
+                modifier = Modifier
+                    .background(Yellow)
+                    .fillMaxHeight(),
+            ){
+                val uiState = gameViewModel.homeScreenUiState.collectAsState()
+                Column(modifier = Modifier.align(Alignment.TopCenter).padding(10.dp)) {
+                    when(val state = uiState.value){
+                        is HomeScreenUiState.Loading -> {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                        }
+                        is HomeScreenUiState.Success -> {
+                            Text("Scoreboard", fontFamily = FontFamily.Monospace, modifier = Modifier
+                                .align(Alignment.CenterHorizontally)
+                                .padding(5.dp, 5.dp, 5.dp, 5.dp), fontSize = 20.sp
+                                , color = Color.DarkGray)
+                            ThreeColumnTable(state.scores, gameViewModel)
+                        }
+                        is HomeScreenUiState.Error -> {
+                            InfoDialog("Error","Something went wrong") {
+                                gameViewModel.closeDialog()
+                            }
                         }
                     }
-                }
 
+                }
+                Button(
+                    onClickAction, modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(0.dp, 10.dp, 0.dp, 100.dp)) {
+                    Text("Start game")
+                }
             }
-            Button(
-                onClickAction, modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(0.dp, 10.dp, 0.dp, 100.dp)) {
-                Text("Start game")
-            }
+
         }
+
 
     }
 
