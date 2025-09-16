@@ -59,7 +59,7 @@ import kotlin.math.roundToInt
                 modifier = Modifier
                     .background(Yellow)
                     .fillMaxWidth()
-                    ,
+                    .padding(15.dp)
             ){
                 Row(modifier = Modifier.align(Alignment.TopStart).background(YellowishWhte)){
                     BasicDropdownMenu(modifier = Modifier.padding(2.dp))
